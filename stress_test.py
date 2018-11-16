@@ -141,6 +141,7 @@ def count():
                 prev = i    
             elif len(SMTP_LOGIN_TIME)-prev_login_count > 0:
                 tsdb.send('stress_test.login_count', len(SMTP_LOGIN_TIME)-prev_login_count, tag1=TEST_CLUSTER)
+                tsdb.send('stress_test.login_count_total', len(SMTP_LOGIN_TIME), tag1=TEST_CLUSTER)
                 tsdb.send('stress_test.login_time_taken_in_seconds', SMTP_LOGIN_TIME[len(SMTP_SENDMAIL_TIME)-1], tag1=TEST_CLUSTER)    
             prev_login_count = len(SMTP_LOGIN_TIME)
             prev_mail_count = len(SMTP_SENDMAIL_TIME)
