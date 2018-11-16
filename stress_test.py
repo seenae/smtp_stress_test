@@ -51,6 +51,8 @@ CREDS = {
     }
 }
 
+Out_delivery_mail_addr = {'email_id':'krishna@email-test.ops.flock.com'}
+
 @RateLimiter(max_calls=MAX_RATE, period=TIME_PERIOD)
 def perform_smtp_test(sender, receiver, auth=True, smtp_host=SMTP_HOST, files=None, receive_method='imap'):
     subject = uuid.uuid4().hex
@@ -111,9 +113,9 @@ def stress_test_smtp(smtp_host=SMTP_HOST, ssl_percentage=0, preserve=PRESERVE_SE
             SMTP_LOGIN_TIME.append(login_time)         
     for i in range(0, MAX_MAILS):
         if preserve:
-            perform_smtp_test_preserved(CREDS['fmail2'], CREDS['fmail1'],conn)
+            perform_smtp_test_preserved(CREDS['fmail2'], Out_delivery_mail_addr ,conn)
         else:
-            perform_smtp_test(CREDS['fmail2'], CREDS['fmail1'])
+            perform_smtp_test(CREDS['fmail2'], Out_delivery_mail_addr)
     conn.quit()             
       #  perform_smtp_test_preserved_connect(CREDS['fmail2'], CREDS['fmail1'],CONCURRENT_SMTPs[i%MAX_CONCURRENT_CONNECTIONS])
 
