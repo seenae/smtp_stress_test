@@ -104,13 +104,17 @@ def stress_test_smtp(smtp_host=SMTP_HOST, ssl_percentage=0, preserve=PRESERVE_SE
         else:
             conn = smtplib.SMTP(smtp_host)
         if pwd:
-            start = time.time()
-            conn.login(CREDS['fmail2']['email_id'], CREDS['fmail2']['pwd'])
-            login_time = time.time() - start
+            try:
+                start = time.time()
+                conn.login(CREDS['fmail2']['email_id'], CREDS['fmail2']['pwd'])
+                login_time = time.time() - start
+            except:
+                return    
         else:
             login_time = -1
         if login_time > 0:
-            SMTP_LOGIN_TIME.append(login_time)         
+            SMTP_LOGIN_TIME.append(login_time)
+            tsdb.send('stress_test.login_count_total', len(SMTP_LOGIN_TIME), tag1=TEST_CLUSTER)         
     for i in range(0, MAX_MAILS):
         if preserve:
             perform_smtp_test_preserved(CREDS['fmail2'], Out_delivery_mail_addr ,conn)
@@ -142,7 +146,6 @@ def count():
                 prev_mail_count = len(SMTP_SENDMAIL_TIME)        
         elif len(SMTP_LOGIN_TIME)-prev_login_count > 0:
             tsdb.send('stress_test.login_count', len(SMTP_LOGIN_TIME)-prev_login_count, tag1=TEST_CLUSTER)
-            tsdb.send('stress_test.login_count_total', len(SMTP_LOGIN_TIME), tag1=TEST_CLUSTER)
             tsdb.send('stress_test.login_time_taken_in_seconds', SMTP_LOGIN_TIME[len(SMTP_SENDMAIL_TIME)-1], tag1=TEST_CLUSTER)    
             prev_login_count = len(SMTP_LOGIN_TIME)
             
