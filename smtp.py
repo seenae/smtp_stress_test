@@ -39,7 +39,7 @@ def send_mail(smtp_host, sender, pwd, recepients, subject, text, files=None, ssl
             server = smtplib.SMTP_SSL(smtp_host)
         else:
             server = smtplib.SMTP(smtp_host)
-        server.set_debuglevel(True)
+        #server.set_debuglevel(True)
         
         if pwd:
             start = time.time()
@@ -48,7 +48,7 @@ def send_mail(smtp_host, sender, pwd, recepients, subject, text, files=None, ssl
         else:
             login_time = -1    
         start = time.time()    
-        server.sendmail(sender, recepients, msg.as_string())
+        #server.sendmail(sender, recepients, msg.as_string())
         sendmail_time = time.time() - start
     except:
         return 'FAIL',-1,-1
@@ -135,19 +135,12 @@ def preserve_connection_send(smtp_host, sender, pwd, recepients, subject, text, 
                     basename(file_name))
                 msg.attach(part)
                 
-        if pwd:
-            start = time.time()
-            server.login(sender, pwd)
-            login_time = time.time() - start
-        else:
-            login_time = -1    
+        
+        login_time = -1    
         start = time.time()    
         server.sendmail(sender, recepients, msg.as_string())
         sendmail_time = time.time() - start
     except:
         return 'FAIL',-1,-1
-    finally:
-        if server:
-            server.quit()
     return ('PASS',login_time,sendmail_time)
 

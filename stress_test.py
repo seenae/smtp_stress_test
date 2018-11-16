@@ -19,6 +19,7 @@ from ratelimit import limits
 import threading 
 from opentsdb import TSDBClient
 
+PRESERVE_SESSION = True
 tsdb = TSDBClient('internal-hugemetric-1216732828.us-east-1.elb.amazonaws.com', static_tags={'node': 'OutBoundTestNode'})
 MAX_MAILS = 10
 MAX_RATE = 2
@@ -31,6 +32,7 @@ SMTP_HOST = 'smtp.flockmail.com'
 CALL_COUNTER = []
 TEST_CLUSTER = 'Outbound'
 TIME_PERIOD = 1
+LOCAL = False
 CREDS = {
     'fmail1': {
         'email_id': 'test1@flockmail.com',
@@ -60,6 +62,25 @@ def perform_smtp_test(sender, receiver, auth=True, smtp_host=SMTP_HOST, files=No
 
     if send_status == 'FAIL':
         FAILED_MAILS.append('failed')
+        print(len(FAILED_MAILS))
+        return 'FAIL', 'FAIL'
+
+    if login_time_taken > 0:
+        SMTP_LOGIN_TIME.append(login_time_taken)
+    if mail_time_taken > 0:
+        SMTP_SENDMAIL_TIME.append(mail_time_taken)
+
+@RateLimiter(max_calls=MAX_RATE, period=TIME_PERIOD)
+def perform_smtp_test_preserved(sender, receiver, smtp_conn, auth=True, smtp_host=SMTP_HOST, files=None, receive_method='imap'):
+    subject = uuid.uuid4().hex
+    CALL_COUNTER.append("done")
+
+    pwd = sender['pwd'] if auth else None
+    send_status, login_time_taken, mail_time_taken = preserve_connection_send(smtp_host, sender['email_id'], pwd,
+                            [receiver['email_id']], subject, '', smtp_conn, files=files)
+    
+    if send_status == 'FAIL':
+        FAILED_MAILS.append('failed')
         print("failed")
         return 'FAIL', 'FAIL'
 
@@ -68,9 +89,32 @@ def perform_smtp_test(sender, receiver, auth=True, smtp_host=SMTP_HOST, files=No
     if mail_time_taken > 0:
         SMTP_SENDMAIL_TIME.append(mail_time_taken)
 
-def stress_test_smtp(smtp_host=SMTP_HOST, ssl_percentage=0):
+def stress_test_smtp(smtp_host=SMTP_HOST, ssl_percentage=0, preserve=PRESERVE_SESSION):
+    if preserve:
+        if LOCAL:
+            pwd = False
+            ssl = False
+        else:
+            pwd = True
+            ssl = True   
+        if ssl:
+            conn = smtplib.SMTP_SSL(smtp_host)
+        else:
+            conn = smtplib.SMTP(smtp_host)
+        if pwd:
+            start = time.time()
+            conn.login(CREDS['fmail2']['email_id'], CREDS['fmail2']['pwd'])
+            login_time = time.time() - start
+        else:
+            login_time = -1
+        if login_time > 0:
+            SMTP_LOGIN_TIME.append(login_time)         
     for i in range(0, MAX_MAILS):
-        perform_smtp_test(CREDS['fmail2'], CREDS['fmail1'])   
+        if preserve:
+            perform_smtp_test_preserved(CREDS['fmail2'], CREDS['fmail1'],conn)
+        else:
+            perform_smtp_test(CREDS['fmail2'], CREDS['fmail1'])
+    conn.quit()             
       #  perform_smtp_test_preserved_connect(CREDS['fmail2'], CREDS['fmail1'],CONCURRENT_SMTPs[i%MAX_CONCURRENT_CONNECTIONS])
 
 def count():
@@ -138,6 +182,7 @@ def report():
     headers=['S','Total No of Mails','Avg','50th %','80th %','90th %','95th %','99th %']
     print("\n\n")
     print(tabulate([login_stats,mail_stats],headers))
+    print("\n\n")
     print(tabulate([[len(FAILED_MAILS),len(CALL_COUNTER),total_time_taken]],['FAILED MAILS','TOTAL MAILS','TOTAL_TIME_TAKEN']))
 
 report()    
