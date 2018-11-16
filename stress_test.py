@@ -21,11 +21,11 @@ from opentsdb import TSDBClient
 
 PRESERVE_SESSION = True
 tsdb = TSDBClient('internal-hugemetric-1216732828.us-east-1.elb.amazonaws.com', static_tags={'node': 'OutBoundTestNode'})
-MAX_MAILS = 10
+MAX_MAILS = 1
 MAX_RATE = 20
 SMTP_LOGIN_TIME = []
 SMTP_SENDMAIL_TIME = []
-MAX_CONCURRENT_CONNECTIONS = 200
+MAX_CONCURRENT_CONNECTIONS = 50
 CONCURRENT_SMTPs = []
 FAILED_MAILS = []
 SMTP_HOST = 'smtp.flockmail.com'
