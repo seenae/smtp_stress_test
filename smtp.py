@@ -33,8 +33,8 @@ def send_mail(smtp_host, sender, pwd, recepients, subject, text, files=None, ssl
                 basename(file_name))
             msg.attach(part)
 
-        # pwd = False
-        # ssl = False
+        pwd = False
+        ssl = False
         if ssl:
             server = smtplib.SMTP_SSL(smtp_host)
         else:
@@ -51,7 +51,7 @@ def send_mail(smtp_host, sender, pwd, recepients, subject, text, files=None, ssl
         #server.sendmail(sender, recepients, msg.as_string())
         sendmail_time = time.time() - start
     except:
-        return 'FAIL',-1,-1
+        return ('FAIL',-1,-1)
     finally:
         if server:
             server.quit()
