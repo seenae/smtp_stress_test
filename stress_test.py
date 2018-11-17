@@ -33,7 +33,7 @@ SMTP_HOST = 'localhost'
 CALL_COUNTER = []
 TEST_CLUSTER = 'Outbound'
 TIME_PERIOD = 1
-LOCAL = True
+LOCAL = False
 CREDS = {
     'fmail1': {
         'email_id': 'test1@flockmail.com',
