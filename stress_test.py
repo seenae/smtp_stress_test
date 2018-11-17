@@ -20,20 +20,25 @@ from ratelimit import limits
 import threading 
 from opentsdb import TSDBClient
 
-PRESERVE_SESSIONS = False
 tsdb = TSDBClient('internal-hugemetric-1216732828.us-east-1.elb.amazonaws.com', static_tags={'node': 'OutBoundTestNode'})
+
 MAILS_PER_THREAD = 5
-MAX_RATE = 1000
-SMTP_LOGIN_TIME = [0]
-SMTP_SENDMAIL_TIME = []
+MAX_RATE = 1
 MAX_THREADS = 1000
-CONCURRENT_SMTPs = []
-FAILED_MAILS = []
-SMTP_HOST = 'localhost'
-CALL_COUNTER = []
+SMTP_HOST = 'smtp.flockmail.com'
 TEST_CLUSTER = 'Outbound'
 TIME_PERIOD = 1
 LOCAL = False
+PRESERVE_SESSIONS = False
+
+
+#global lists
+CONCURRENT_SMTPs = []
+SMTP_SENDMAIL_TIME = []
+SMTP_LOGIN_TIME = []
+FAILED_MAILS = []
+CALL_COUNTER = []
+
 CREDS = {
     'fmail1': {
         'email_id': 'test1@flockmail.com',
@@ -112,7 +117,6 @@ def main(argv):
     report()
     # 
                          
-ratelimiter = RateLimiter(max_calls=MAX_RATE, period=TIME_PERIOD)
 def perform_smtp_test(sender, receiver, auth=True, smtp_host=SMTP_HOST, files=None, receive_method='imap'):
     subject = uuid.uuid4().hex
     CALL_COUNTER.append("done")
@@ -151,13 +155,8 @@ def perform_smtp_test_preserved(sender, receiver, smtp_conn, auth=True, smtp_hos
         SMTP_SENDMAIL_TIME.append(mail_time_taken)
 
 def stress_test_smtp(smtp_host=SMTP_HOST, ssl_percentage=0, preserve=PRESERVE_SESSIONS):
-    global MAX_RATE
-    global MAX_THREADS
-    global MAILS_PER_THREAD
-    global PRESERVE_SESSIONS
-    global SMTP_HOST
-    global TIME_PERIOD
-    global TEST_CLUSTER
+    print('p',PRESERVE_SESSIONS)
+    print('pres',preserve)
     if preserve:
         if LOCAL:
             pwd = False
@@ -181,7 +180,9 @@ def stress_test_smtp(smtp_host=SMTP_HOST, ssl_percentage=0, preserve=PRESERVE_SE
         if login_time > 0:
             SMTP_LOGIN_TIME.append(login_time)
             tsdb.send('stress_test.login_count_total', len(SMTP_LOGIN_TIME), cluster=TEST_CLUSTER)
-    ratelimiter = RateLimiter(max_calls=MAX_RATE, period=TIME_PERIOD)                 
+    ratelimiter = RateLimiter(max_calls=MAX_RATE, period=TIME_PERIOD)
+    print('mr',MAX_RATE)  
+    print('mpt',MAILS_PER_THREAD)               
     for i in range(0, MAILS_PER_THREAD):
         with ratelimiter:
             if preserve:
@@ -224,6 +225,7 @@ def count():
 def report():
     test_start_time = time.time()
     thread_list = []
+    print('mt',MAX_THREADS)
     for i in range(0,MAX_THREADS):
         thread = threading.Thread(target=stress_test_smtp, args=())
         thread_list.append(thread)
