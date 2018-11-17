@@ -155,8 +155,8 @@ def perform_smtp_test_preserved(sender, receiver, smtp_conn, auth=True, smtp_hos
         SMTP_SENDMAIL_TIME.append(mail_time_taken)
 
 def stress_test_smtp(smtp_host=SMTP_HOST, ssl_percentage=0, preserve=PRESERVE_SESSIONS):
-    print('p',PRESERVE_SESSIONS)
-    print('pres',preserve)
+    # print('p',PRESERVE_SESSIONS)
+    # print('pres',preserve)
     if preserve:
         if LOCAL:
             pwd = False
@@ -181,8 +181,8 @@ def stress_test_smtp(smtp_host=SMTP_HOST, ssl_percentage=0, preserve=PRESERVE_SE
             SMTP_LOGIN_TIME.append(login_time)
             tsdb.send('stress_test.login_count_total', len(SMTP_LOGIN_TIME), cluster=TEST_CLUSTER)
     ratelimiter = RateLimiter(max_calls=MAX_RATE, period=TIME_PERIOD)
-    print('mr',MAX_RATE)  
-    print('mpt',MAILS_PER_THREAD)               
+    # print('mr',MAX_RATE)  
+    # print('mpt',MAILS_PER_THREAD)               
     for i in range(0, MAILS_PER_THREAD):
         with ratelimiter:
             if preserve:
@@ -225,7 +225,7 @@ def count():
 def report():
     test_start_time = time.time()
     thread_list = []
-    print('mt',MAX_THREADS)
+    # print('mt',MAX_THREADS)
     for i in range(0,MAX_THREADS):
         thread = threading.Thread(target=stress_test_smtp, args=())
         thread_list.append(thread)
