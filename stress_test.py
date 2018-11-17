@@ -110,7 +110,7 @@ def main(argv):
 
     MAILS_PER_THREAD = int(MAX_MAILS/MAX_THREADS)
     print(SMTP_HOST)
-    report()
+    report(SMTP_HOST,MAILS_PER_THREAD,MAX_RATE,MAX_THREADS,PRESERVE_SESSIONS,TEST_CLUSTER,TIME_PERIOD)
     # 
 
 def perform_smtp_test(sender, receiver, auth=True, smtp_host=SMTP_HOST, files=None, receive_method='imap'):
@@ -151,13 +151,6 @@ def perform_smtp_test_preserved(sender, receiver, smtp_conn, auth=True, smtp_hos
         SMTP_SENDMAIL_TIME.append(mail_time_taken)
 
 def stress_test_smtp(smtp_host=SMTP_HOST, ssl_percentage=0, preserve=PRESERVE_SESSIONS):
-    global MAX_RATE
-    global MAX_THREADS
-    global MAILS_PER_THREAD
-    global PRESERVE_SESSIONS
-    global SMTP_HOST
-    global TIME_PERIOD
-    global TEST_CLUSTER
     if preserve:
         if LOCAL:
             pwd = False
@@ -221,7 +214,7 @@ def count():
         tsdb.send('stress_test.failed_mails_count', len(FAILED_MAILS), cluster=TEST_CLUSTER)    
         time.sleep(1)
 
-def report():
+def report(SMTP_HOST,MAILS_PER_THREAD,MAX_RATE,MAX_THREADS,PRESERVE_SESSIONS,TEST_CLUSTER,TIME_PERIOD):
     test_start_time = time.time()
     thread_list = []
     for i in range(0,MAX_THREADS):
