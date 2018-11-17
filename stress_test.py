@@ -109,6 +109,7 @@ def main(argv):
             TIME_PERIOD = int(arg)
 
     MAILS_PER_THREAD = int(MAX_MAILS/MAX_THREADS)
+    print(SMTP_HOST)
     report()
     # 
 
