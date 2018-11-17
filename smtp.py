@@ -50,7 +50,8 @@ def send_mail(smtp_host, sender, pwd, recepients, subject, text, files=None, ssl
         start = time.time()    
         #server.sendmail(sender, recepients, msg.as_string())
         sendmail_time = time.time() - start
-    except:
+    except Exception as e:
+        print(e)
         return ('FAIL',-1,-1)
     finally:
         if server:
