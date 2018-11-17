@@ -22,12 +22,17 @@ from opentsdb import TSDBClient
 
 PRESERVE_SESSIONS = False
 tsdb = TSDBClient('internal-hugemetric-1216732828.us-east-1.elb.amazonaws.com', static_tags={'node': 'OutBoundTestNode'})
-
+MAILS_PER_THREAD = 5
+MAX_RATE = 1000
 SMTP_LOGIN_TIME = []
 SMTP_SENDMAIL_TIME = []
+MAX_THREADS = 1000
 CONCURRENT_SMTPs = []
 FAILED_MAILS = []
+SMTP_HOST = 'localhost'
 CALL_COUNTER = []
+TEST_CLUSTER = 'Outbound'
+TIME_PERIOD = 1
 LOCAL = False
 CREDS = {
     'fmail1': {
@@ -50,13 +55,13 @@ CREDS = {
 Out_delivery_mail_addr = {'email_id':'krishna@email-test.ops.flock.com'}
 
 def main(argv):
-    global MAX_RATE = 100
-    global MAX_THREADS = 1
-    global MAILS_PER_THREAD = 5
-    global PRESERVE_SESSIONS = False
-    global SMTP_HOST = 'localhost'
-    global TIME_PERIOD = 1
-    global TEST_CLUSTER = 'Outbound'
+    global MAX_RATE
+    global MAX_THREADS
+    global MAILS_PER_THREAD
+    global PRESERVE_SESSIONS
+    global SMTP_HOST
+    global TIME_PERIOD
+    global TEST_CLUSTER
     try:
       opts, args = getopt.getopt(argv,"h:r:m:t:p:",["max_rate=","max_mails=","max_threads=","preserve=","smtp_host=","test_cluster=","time_period=",])
     except getopt.GetoptError:
@@ -146,6 +151,13 @@ def perform_smtp_test_preserved(sender, receiver, smtp_conn, auth=True, smtp_hos
         SMTP_SENDMAIL_TIME.append(mail_time_taken)
 
 def stress_test_smtp(smtp_host=SMTP_HOST, ssl_percentage=0, preserve=PRESERVE_SESSIONS):
+    global MAX_RATE
+    global MAX_THREADS
+    global MAILS_PER_THREAD
+    global PRESERVE_SESSIONS
+    global SMTP_HOST
+    global TIME_PERIOD
+    global TEST_CLUSTER
     if preserve:
         if LOCAL:
             pwd = False
