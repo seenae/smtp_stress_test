@@ -32,7 +32,7 @@ def send_mail(smtp_host, sender, pwd, recepients, subject, text, files=None, ssl
             part['Content-Disposition'] = 'attachment; filename="{}"'.format(
                 basename(file_name))
             msg.attach(part)
-
+        print(smtp_host)
         # pwd = False
         # ssl = False
         if ssl:
