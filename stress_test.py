@@ -10,6 +10,7 @@ import random
 import numpy as np
 import smtplib
 import logging
+import sys, getopt
 #logging.basicConfig(level=logging.DEBUG)
 from ratelimit import limits
 from multiprocessing import Process
@@ -19,20 +20,20 @@ from ratelimit import limits
 import threading 
 from opentsdb import TSDBClient
 
-PRESERVE_SESSION = True
+PRESERVE_SESSIONS = True
 tsdb = TSDBClient('internal-hugemetric-1216732828.us-east-1.elb.amazonaws.com', static_tags={'node': 'OutBoundTestNode'})
-MAX_MAILS = 5
+MAILS_PER_THREAD = 5
 MAX_RATE = 1000
-SMTP_LOGIN_TIME = []
+SMTP_LOGIN_TIME = [0]
 SMTP_SENDMAIL_TIME = []
-MAX_CONCURRENT_CONNECTIONS = 1000
+MAX_THREADS = 1000
 CONCURRENT_SMTPs = []
 FAILED_MAILS = []
-SMTP_HOST = 'smtp.flockmail.com'
+SMTP_HOST = 'localhost'
 CALL_COUNTER = []
 TEST_CLUSTER = 'Outbound'
 TIME_PERIOD = 1
-LOCAL = False
+LOCAL = True
 CREDS = {
     'fmail1': {
         'email_id': 'test1@flockmail.com',
@@ -53,7 +54,7 @@ CREDS = {
 
 Out_delivery_mail_addr = {'email_id':'krishna@email-test.ops.flock.com'}
 
-@RateLimiter(max_calls=MAX_RATE, period=TIME_PERIOD)
+ratelimiter = RateLimiter(max_calls=MAX_RATE, period=TIME_PERIOD)
 def perform_smtp_test(sender, receiver, auth=True, smtp_host=SMTP_HOST, files=None, receive_method='imap'):
     subject = uuid.uuid4().hex
     CALL_COUNTER.append("done")
@@ -72,7 +73,7 @@ def perform_smtp_test(sender, receiver, auth=True, smtp_host=SMTP_HOST, files=No
     if mail_time_taken > 0:
         SMTP_SENDMAIL_TIME.append(mail_time_taken)
 
-@RateLimiter(max_calls=MAX_RATE, period=TIME_PERIOD)
+# @RateLimiter(max_calls=MAX_RATE, period=TIME_PERIOD)
 def perform_smtp_test_preserved(sender, receiver, smtp_conn, auth=True, smtp_host=SMTP_HOST, files=None, receive_method='imap'):
     subject = uuid.uuid4().hex
     CALL_COUNTER.append("done")
@@ -91,7 +92,7 @@ def perform_smtp_test_preserved(sender, receiver, smtp_conn, auth=True, smtp_hos
     if mail_time_taken > 0:
         SMTP_SENDMAIL_TIME.append(mail_time_taken)
 
-def stress_test_smtp(smtp_host=SMTP_HOST, ssl_percentage=0, preserve=PRESERVE_SESSION):
+def stress_test_smtp(smtp_host=SMTP_HOST, ssl_percentage=0, preserve=PRESERVE_SESSIONS):
     if preserve:
         if LOCAL:
             pwd = False
@@ -114,39 +115,43 @@ def stress_test_smtp(smtp_host=SMTP_HOST, ssl_percentage=0, preserve=PRESERVE_SE
             login_time = -1
         if login_time > 0:
             SMTP_LOGIN_TIME.append(login_time)
-            tsdb.send('stress_test.login_count_total', len(SMTP_LOGIN_TIME), tag1=TEST_CLUSTER)         
-    for i in range(0, MAX_MAILS):
-        if preserve:
-            perform_smtp_test_preserved(CREDS['fmail2'], Out_delivery_mail_addr ,conn)
-        else:
-            perform_smtp_test(CREDS['fmail2'], Out_delivery_mail_addr)
-    conn.quit()             
-      #  perform_smtp_test_preserved_connect(CREDS['fmail2'], CREDS['fmail1'],CONCURRENT_SMTPs[i%MAX_CONCURRENT_CONNECTIONS])
+            tsdb.send('stress_test.login_count_total', len(SMTP_LOGIN_TIME), cluster=TEST_CLUSTER)
+    ratelimiter = RateLimiter(max_calls=MAX_RATE, period=TIME_PERIOD)                 
+    for i in range(0, MAILS_PER_THREAD):
+        with ratelimiter:
+            if preserve:
+                perform_smtp_test_preserved(CREDS['fmail2'], Out_delivery_mail_addr ,conn)
+            else:
+                perform_smtp_test(CREDS['fmail2'], Out_delivery_mail_addr)
+    if preserve:
+        conn.quit()             
+      #  perform_smtp_test_preserved_connect(CREDS['fmail2'], CREDS['fmail1'],CONCURRENT_SMTPs[i%MAX_THREADS])
 
 def count():
     prev_login_count = 0
     prev_mail_count = 0
     count = 0
     prev = 0
-    while len(CALL_COUNTER) < MAX_CONCURRENT_CONNECTIONS*MAX_MAILS:
+    while len(CALL_COUNTER) < MAX_THREADS*MAILS_PER_THREAD:
         count = count + 1
         if len(SMTP_SENDMAIL_TIME) > 0:
             i = len(SMTP_SENDMAIL_TIME) - 1
             if len(SMTP_SENDMAIL_TIME)-prev_mail_count > 0:
                 if count == 10:
                     mail_data_array = SMTP_SENDMAIL_TIME[prev_mail_count:len(SMTP_SENDMAIL_TIME)]
-                    tsdb.send('stress_test.mail_time_taken_95p', np.percentile(mail_data_array,95), tag1=TEST_CLUSTER)
-                    tsdb.send('stress_test.mail_time_taken_90p', np.percentile(mail_data_array,90), tag1=TEST_CLUSTER)
-                    tsdb.send('stress_test.mail_time_taken_avg', np.average(mail_data_array), tag1=TEST_CLUSTER)
+                    tsdb.send('stress_test.mail_time_taken_95p', np.percentile(mail_data_array,95), cluster=TEST_CLUSTER)
+                    tsdb.send('stress_test.mail_time_taken_90p', np.percentile(mail_data_array,90), cluster=TEST_CLUSTER)
+                    tsdb.send('stress_test.mail_time_taken_avg', np.average(mail_data_array), cluster=TEST_CLUSTER)
                     count = 0
-                tsdb.send('stress_test.mail_count', len(SMTP_SENDMAIL_TIME)-prev_mail_count, tag1=TEST_CLUSTER)
+                tsdb.send('stress_test.mail_count', len(SMTP_SENDMAIL_TIME)-prev_mail_count, cluster=TEST_CLUSTER)
                 for k in range(prev,i):
-                    tsdb.send('stress_test.mail_time_taken_in_seconds', SMTP_SENDMAIL_TIME[k], tag1=TEST_CLUSTER)
+                    tsdb.send('stress_test.mail_time_taken_in_seconds', SMTP_SENDMAIL_TIME[k], cluster=TEST_CLUSTER)
                 prev = i
                 prev_mail_count = len(SMTP_SENDMAIL_TIME)        
-        elif len(SMTP_LOGIN_TIME)-prev_login_count > 0:
-            tsdb.send('stress_test.login_count', len(SMTP_LOGIN_TIME)-prev_login_count, tag1=TEST_CLUSTER)
-            tsdb.send('stress_test.login_time_taken_in_seconds', SMTP_LOGIN_TIME[len(SMTP_SENDMAIL_TIME)-1], tag1=TEST_CLUSTER)    
+        if len(SMTP_LOGIN_TIME)-prev_login_count > 0:
+            tsdb.send('stress_test.login_count', len(SMTP_LOGIN_TIME)-prev_login_count, cluster=TEST_CLUSTER)
+            tsdb.send('stress_test.login_time_taken_in_seconds', SMTP_LOGIN_TIME[len(SMTP_SENDMAIL_TIME)-1], cluster=TEST_CLUSTER)
+            tsdb.send('stress_test.login_count_total', len(SMTP_LOGIN_TIME), cluster=TEST_CLUSTER)    
             prev_login_count = len(SMTP_LOGIN_TIME)
             
         time.sleep(1)
@@ -154,7 +159,7 @@ def count():
 def report():
     test_start_time = time.time()
     thread_list = []
-    for i in range(0,MAX_CONCURRENT_CONNECTIONS):
+    for i in range(0,MAX_THREADS):
         thread = threading.Thread(target=stress_test_smtp, args=())
         thread_list.append(thread)
     tt = threading.Thread(target=count, args=())
@@ -193,6 +198,62 @@ def report():
     print("\n\n")
     print(tabulate([[len(FAILED_MAILS),len(CALL_COUNTER),total_time_taken]],['FAILED MAILS','TOTAL MAILS','TOTAL_TIME_TAKEN']))
 
-report()    
+def main(argv):
+    global MAX_RATE
+    global MAX_THREADS
+    global MAILS_PER_THREAD
+    global PRESERVE_SESSIONS
+    global SMTP_HOST
+    global TIME_PERIOD
+    global TEST_CLUSTER
+    try:
+      opts, args = getopt.getopt(argv,"h:r:m:t:p:",["max_rate=","max_mails=","max_threads=","preserve=","smtp_host=","test_cluster=","time_period=",])
+    except getopt.GetoptError:
+      print('Usage: stress_test.py -r <rate> -m <max_mails> -t <max_threads> -p <preserve_connections> \n \
+                            where :  \n \
+                                  -r or --max_rate = maximum rate at which mails will be send to the server\n \
+                                  -m or --max_mails = maximum number of mails which will be send\n \
+                                  -t or --max_threads = maximum number of threads which will be created \n \
+                                                        Note: if preserve=True this number will be max number of concurrent connections to the server.\n \
+                                  -p or --preserve = whether to preserve the smtp session connection object for next mails: Value= True or False\n \
+                                  -host or --smtp_host = SMTP HOST TO BE TESTED\n \
+                                  -cluster or --test_cluster = Inbound or OutBound \n \
+                                  -tp or --time_period = time_period for max_rate is considered default is 1 second\n')
+      sys.exit(2)    
+    for opt, arg in opts:
+       if opt == '-h':
+           print('Usage: stress_test.py -r <rate> -m <max_mails> -t <max_threads> -p <preserve_connections> \n \
+                            where :  \n \
+                                  -r or --max_rate = maximum rate at which mails will be send to the server\n \
+                                  -m or --max_mails = maximum number of mails which will be send\n \
+                                  -t or --max_threads = maximum number of threads which will be created \n \
+                                                        Note: if preserve=True this number will be max number of concurrent connections to the server.\n \
+                                  -p or --preserve = whether to preserve the smtp session connection object for next mails: Value= True or False\n \
+                                  -host or --smtp_host = SMTP HOST TO BE TESTED\n \
+                                  -cluster or --test_cluster = Inbound or OutBound \n \
+                                  -tp or --time_period = time_period for max_rate is considered default is 1 second\n')
+           sys.exit()
+       elif opt in ("-r", "--max_rate"):
+            MAX_RATE = int(arg)
+       elif opt in ("-m", "--max_mails"):
+            MAX_MAILS = int(arg)
+       elif opt in ("-t", "--max_threads"):
+            MAX_THREADS = int(arg)
+       elif opt in ("-p", "--preserve"):
+            PRESERVE_SESSIONS = bool(arg)
+       elif opt in ("--smtp_host"):
+            SMTP_HOST = arg
+       elif opt in ("--test_cluster"):
+            TEST_CLUSTER = arg
+       elif opt in ("--time_period"):
+            TIME_PERIOD = int(arg)
+
+    MAILS_PER_THREAD = int(MAX_MAILS/MAX_THREADS)
+    report()                     
+
+   
+if __name__ == "__main__":
+   main(sys.argv[1:])
+   print(MAX_RATE,MAX_THREADS,MAILS_PER_THREAD,TIME_PERIOD)    
 
 
