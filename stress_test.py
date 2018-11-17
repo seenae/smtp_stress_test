@@ -24,7 +24,7 @@ PRESERVE_SESSIONS = False
 tsdb = TSDBClient('internal-hugemetric-1216732828.us-east-1.elb.amazonaws.com', static_tags={'node': 'OutBoundTestNode'})
 MAILS_PER_THREAD = 5
 MAX_RATE = 1000
-SMTP_LOGIN_TIME = []
+SMTP_LOGIN_TIME = [0]
 SMTP_SENDMAIL_TIME = []
 MAX_THREADS = 1000
 CONCURRENT_SMTPs = []
@@ -76,7 +76,7 @@ def main(argv):
                                   -cluster or --test_cluster = Inbound or OutBound \n \
                                   -tp or --time_period = time_period for max_rate is considered default is 1 second\n')
       sys.exit(2)
-   # print(opts)      
+    print(opts)      
     for opt, arg in opts:
        if opt == '-h':
            print('Usage: stress_test.py -r <rate> -m <max_mails> -t <max_threads> -p <preserve_connections> \n \
@@ -109,10 +109,10 @@ def main(argv):
             TIME_PERIOD = int(arg)
 
     MAILS_PER_THREAD = int(MAX_MAILS/MAX_THREADS)
-    print(SMTP_HOST)
-    report(SMTP_HOST,MAILS_PER_THREAD,MAX_RATE,MAX_THREADS,PRESERVE_SESSIONS,TEST_CLUSTER,TIME_PERIOD)
+    report()
     # 
-
+                         
+ratelimiter = RateLimiter(max_calls=MAX_RATE, period=TIME_PERIOD)
 def perform_smtp_test(sender, receiver, auth=True, smtp_host=SMTP_HOST, files=None, receive_method='imap'):
     subject = uuid.uuid4().hex
     CALL_COUNTER.append("done")
@@ -214,7 +214,7 @@ def count():
         tsdb.send('stress_test.failed_mails_count', len(FAILED_MAILS), cluster=TEST_CLUSTER)    
         time.sleep(1)
 
-def report(SMTP_HOST,MAILS_PER_THREAD,MAX_RATE,MAX_THREADS,PRESERVE_SESSIONS,TEST_CLUSTER,TIME_PERIOD):
+def report():
     test_start_time = time.time()
     thread_list = []
     for i in range(0,MAX_THREADS):
