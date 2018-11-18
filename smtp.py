@@ -8,6 +8,7 @@ from email.utils import formatdate
 import time
 import os
 import random
+import socket
 
 gen = DocumentGenerator()
 
@@ -37,8 +38,10 @@ def send_mail(smtp_host, sender, pwd, recepients, subject, text, files=None, ssl
         # pwd = False
         # ssl = False
         if ssl:
+            socket.setdefaulttimeout(2 * 60)
             server = smtplib.SMTP_SSL(smtp_host)
         else:
+            socket.setdefaulttimeout(2 * 60)
             server = smtplib.SMTP(smtp_host)
         server.set_debuglevel(True)
         
