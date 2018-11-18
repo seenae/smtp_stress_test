@@ -197,7 +197,7 @@ def count():
     prev_mail_count = 0
     count = 0
     prev = 0
-    while (len(CALL_COUNTER)+len(FAILED_MAILS)) < MAX_THREADS*MAILS_PER_THREAD:
+    while len(CALL_COUNTER) < MAX_THREADS*MAILS_PER_THREAD:
         count = count + 1
         if len(SMTP_SENDMAIL_TIME) > 0:
             i = len(SMTP_SENDMAIL_TIME) - 1
@@ -234,6 +234,7 @@ def report():
         thread.start()  
     for thread in thread_list:
         thread.join()
+    print(len(CALL_COUNTER))    
     tt.join()
     total_time_taken = time.time() - test_start_time            
     #stress_test_smtp_concurrent(smtp_host=SMTP_HOST)
