@@ -126,10 +126,10 @@ def perform_smtp_test(sender, receiver, auth=True, smtp_host=SMTP_HOST, files=No
                             [receiver['email_id']], subject, '', files=files)
     except:
         send_status = 'FAIL'
-    else:
-        send_status = 'FAIL'
         login_time_taken = -1
-        mail_time_taken = -1           
+        mail_time_taken = -1
+    else:
+        send_status = 'FAIL'           
     if send_status == 'FAIL':
         FAILED_MAILS.append('failed')
         #print(len(FAILED_MAILS))
