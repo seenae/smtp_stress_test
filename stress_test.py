@@ -128,7 +128,6 @@ def perform_smtp_test(sender, receiver, auth=True, smtp_host=SMTP_HOST, files=No
     if send_status == 'FAIL':
         FAILED_MAILS.append('failed')
         #print(len(FAILED_MAILS))
-        return 'FAIL', 'FAIL'
 
     if login_time_taken > 0:
         SMTP_LOGIN_TIME.append(login_time_taken)
