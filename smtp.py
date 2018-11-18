@@ -56,7 +56,7 @@ def send_mail(smtp_host, sender, pwd, recepients, subject, text, files=None, ssl
         fail = True
     finally:
         if not 'server' in locals():
-            return ('FAIL',-1,-1)
+            fail = True
         if server:
             server.quit()
         # print(login_time,sendmail_time)
