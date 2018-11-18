@@ -24,8 +24,8 @@ tsdb = TSDBClient('internal-hugemetric-1216732828.us-east-1.elb.amazonaws.com', 
 
 MAILS_PER_THREAD = 5
 MAX_RATE = 1
-MAX_THREADS = 1000
-SMTP_HOST = 'smtp-out101.prod.use1a.i.riva.co'
+MAX_THREADS = 1
+SMTP_HOST = 'internal-smtp-out-internal-1125059143.us-east-1.elb.amazonaws.com'
 TEST_CLUSTER = 'Outbound'
 TIME_PERIOD = 1
 LOCAL = False
