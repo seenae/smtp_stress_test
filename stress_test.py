@@ -129,18 +129,16 @@ def perform_smtp_test(sender, receiver, auth=True, smtp_host=SMTP_HOST, files=No
         login_time_taken = -1
         mail_time_taken = -1
     else:
-        send_status = 'UNKNOWN'
-        login_time_taken = -1
-        mail_time_taken = -1           
+        send_status = 'UNKNOWN'          
     if send_status == 'FAIL':
         FAILED_MAILS.append('failed')
         #print(len(FAILED_MAILS))
-
+    CALL_COUNTER.append("done")
     if login_time_taken > 0:
         SMTP_LOGIN_TIME.append(login_time_taken)
     if mail_time_taken > 0:
         SMTP_SENDMAIL_TIME.append(mail_time_taken)
-    CALL_COUNTER.append("done")    
+        
 
 # @RateLimiter(max_calls=MAX_RATE, period=TIME_PERIOD)
 def perform_smtp_test_preserved(sender, receiver, smtp_conn, auth=True, smtp_host=SMTP_HOST, files=None, receive_method='imap'):
