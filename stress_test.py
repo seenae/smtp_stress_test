@@ -121,9 +121,11 @@ def perform_smtp_test(sender, receiver, auth=True, smtp_host=SMTP_HOST, files=No
     subject = uuid.uuid4().hex
 
     pwd = sender['pwd'] if auth else None
-    send_status, login_time_taken, mail_time_taken = send_mail(smtp_host, sender['email_id'], pwd,
+    try:
+        send_status, login_time_taken, mail_time_taken = send_mail(smtp_host, sender['email_id'], pwd,
                             [receiver['email_id']], subject, '', files=files)
-
+    except:
+        pass
     if send_status == 'FAIL':
         FAILED_MAILS.append('failed')
         #print(len(FAILED_MAILS))
@@ -139,9 +141,11 @@ def perform_smtp_test_preserved(sender, receiver, smtp_conn, auth=True, smtp_hos
     subject = uuid.uuid4().hex
 
     pwd = sender['pwd'] if auth else None
-    send_status, login_time_taken, mail_time_taken = preserve_connection_send(smtp_host, sender['email_id'], pwd,
-                            [receiver['email_id']], subject, '', smtp_conn, files=files)
-    
+    try:
+        send_status, login_time_taken, mail_time_taken = preserve_connection_send(smtp_host, sender['email_id'], pwd,
+                                [receiver['email_id']], subject, '', smtp_conn, files=files)
+    except:
+        pass     
     if send_status == 'FAIL':
         FAILED_MAILS.append('failed')
         #print("failed")
