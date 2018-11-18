@@ -124,7 +124,8 @@ def perform_smtp_test(sender, receiver, auth=True, smtp_host=SMTP_HOST, files=No
     try:
         send_status, login_time_taken, mail_time_taken = send_mail(smtp_host, sender['email_id'], pwd,
                             [receiver['email_id']], subject, '', files=files)
-    except:
+    except Exception as e:
+        print(e)
         send_status = 'FAIL'
         login_time_taken = -1
         mail_time_taken = -1
