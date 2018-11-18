@@ -137,7 +137,6 @@ def perform_smtp_test(sender, receiver, auth=True, smtp_host=SMTP_HOST, files=No
 # @RateLimiter(max_calls=MAX_RATE, period=TIME_PERIOD)
 def perform_smtp_test_preserved(sender, receiver, smtp_conn, auth=True, smtp_host=SMTP_HOST, files=None, receive_method='imap'):
     subject = uuid.uuid4().hex
-    CALL_COUNTER.append("done")
 
     pwd = sender['pwd'] if auth else None
     send_status, login_time_taken, mail_time_taken = preserve_connection_send(smtp_host, sender['email_id'], pwd,
@@ -152,6 +151,7 @@ def perform_smtp_test_preserved(sender, receiver, smtp_conn, auth=True, smtp_hos
         SMTP_LOGIN_TIME.append(login_time_taken)
     if mail_time_taken > 0:
         SMTP_SENDMAIL_TIME.append(mail_time_taken)
+    CALL_COUNTER.append("done")    
 
 def stress_test_smtp(smtp_host=SMTP_HOST, ssl_percentage=0, preserve=PRESERVE_SESSIONS):
     # print('p',PRESERVE_SESSIONS)
