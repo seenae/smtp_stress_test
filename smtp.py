@@ -48,7 +48,7 @@ def send_mail(smtp_host, sender, pwd, recepients, subject, text, files=None, ssl
         else:
             login_time = -1    
         start = time.time()    
-        #server.sendmail(sender, recepients, msg.as_string())
+        server.sendmail(sender, recepients, msg.as_string())
         sendmail_time = time.time() - start
     except Exception as e:
         print(e)
