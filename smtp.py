@@ -39,10 +39,10 @@ def send_mail(smtp_host, sender, pwd, recepients, subject, text, files=None, ssl
         # ssl = False
         if ssl:
             socket.setdefaulttimeout(2 * 60)
-            server = smtplib.SMTP_SSL(host=smtp_host, port=0, local_hostname=None, 2*60, source_address=None)
+            server = smtplib.SMTP_SSL(host=smtp_host, port=0, local_hostname=None, 2*60)
         else:
             socket.setdefaulttimeout(2 * 60)
-            server = smtplib.SMTP(host=smtp_host, port=0, local_hostname=None, 2*60, source_address=None)
+            server = smtplib.SMTP(host=smtp_host, port=0, local_hostname=None, 2*60)
         server.set_debuglevel(True)
         
         if pwd:
