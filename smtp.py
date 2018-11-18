@@ -32,14 +32,14 @@ def send_mail(smtp_host, sender, pwd, recepients, subject, text, files=None, ssl
             part['Content-Disposition'] = 'attachment; filename="{}"'.format(
                 basename(file_name))
             msg.attach(part)
-        print(smtp_host)
+        # print(smtp_host)
         # pwd = False
         # ssl = False
         if ssl:
             server = smtplib.SMTP_SSL(smtp_host)
         else:
             server = smtplib.SMTP(smtp_host)
-        #server.set_debuglevel(True)
+        server.set_debuglevel(True)
         
         if pwd:
             start = time.time()
