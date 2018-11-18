@@ -40,7 +40,7 @@ def send_mail(smtp_host, sender, pwd, recepients, subject, text, files=None, ssl
             server = smtplib.SMTP_SSL(smtp_host)
         else:
             server = smtplib.SMTP(smtp_host)
-        #server.set_debuglevel(True)
+        server.set_debuglevel(True)
         
         if pwd:
             start = time.time()
