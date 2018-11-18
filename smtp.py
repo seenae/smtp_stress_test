@@ -12,6 +12,7 @@ import random
 gen = DocumentGenerator()
 
 def send_mail(smtp_host, sender, pwd, recepients, subject, text, files=None, ssl=True):
+    fail = False
     try:
         msg = MIMEMultipart()
         msg['Subject'] = gen.sentence().split(".")[0]
@@ -52,12 +53,15 @@ def send_mail(smtp_host, sender, pwd, recepients, subject, text, files=None, ssl
         sendmail_time = time.time() - start
     except Exception as e:
         print(e)
+        fail = True
     finally:
         if not 'server' in locals():
             return ('FAIL',-1,-1)
         if server:
             server.quit()
-        # print(login_time,sendmail_time)    
+        # print(login_time,sendmail_time)
+    if fail:
+        return ('FAIL',-1,-1)   
     return ('PASS',login_time,sendmail_time)
 
 def send_mail_attachments(smtp_host, sender, pwd, recepients, subject, text, files=None, ssl=True):
