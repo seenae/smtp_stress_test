@@ -11,7 +11,7 @@ import numpy as np
 import smtplib
 import logging
 import sys, getopt
-logging.basicConfig(level=logging.DEBUG)
+#logging.basicConfig(level=logging.DEBUG)
 from ratelimit import limits
 from multiprocessing import Process
 from ratelimiter import RateLimiter
